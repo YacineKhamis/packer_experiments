@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
 PATH_TO_DIAGNOSTIC='/var/lib/diagnostic'
-GITHUB_LINK=''
+GITHUB_LINK='https://BenjaminJoly:[Password]@github.com/BenjaminJoly/diagnostic.git'
 
 # Variables
 HOSTNAME='diagnostic'
@@ -38,6 +38,8 @@ echo -e "\033[93mgetting diagnostic sources"
 sudo mkdir -p $PATH_TO_DIAGNOSTIC
 cd $PATH_TO_DIAGNOSTIC
 sudo chown www-data:www-data $PATH_TO_DIAGNOSTIC
+#git install
+sudo apt-get install -y git
 sudo -u www-data git clone --config core.filemode=false $GITHUB_LINK .
 if [ $? -ne 0 ]; then
     echo "ERROR: unable to clone the Diagnostic repository"
@@ -61,43 +63,68 @@ mysql -u root -p"$DBPASSWORD_ADMIN" -e "source ./scripts/db_initialization.sql"
 mysql -u root -p"$DBPASSWORD_ADMIN" -e "CREATE USER 'diagnostic'@'localhost' IDENTIFIED BY '$DBPASSWORD_DIAGNOSTIC'"
 mysql -u root -p"$DBPASSWORD_ADMIN" -e "GRANT SELECT, UPDATE, INSERT, DELETE, EXECUTE on diagnostic.* to 'diagnostic'@'localhost'"
 
-declare -A global_configurationArray
-global_configurationArray=(
-    ["%%DB_NAME%%"]=$DB_NAME
-    ["%%DB_HOST%%"]=$DB_HOST
-)
+#declare -A global_configurationArray
+#global_configurationArray["%%DB_NAME%%"]=$DB_NAME
+#global_configurationArray["%%DB_HOST%%"]=$DB_HOST
 
-declare -A local_configurationArray
-local_configurationArray=(
-    ["%%DB_USER%%"]=$DBUSER_DIAGNOSTIC
-    ["%%DB_PASSWORD%%"]=$DBPASSWORD_DIAGNOSTIC
-)
+#declare -A local_configurationArray
+#local_configurationArray["%%DB_USER%%"]=$DBUSER_DIAGNOSTIC
+#local_configurationArray["%%DB_PASSWORD%%"]=$DBPASSWORD_DIAGNOSTIC
 
 cp $PATH_TO_DIAGNOSTIC/config/autoload/global.php.dist $PATH_TO_DIAGNOSTIC/config/autoload/global.php
+cat > $PATH_TO_DIAGNOSTIC/config/autoload/global.php <<EOF
+return [
+    'db' => [
+        'driver'         => 'Pdo',
+        'dsn'            => 'mysql:dbname=$DB_NAME;host=$DB_HOST',
+        'driver_options' => [
+            PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\''
+        ],
+    ],
+    'service_manager' => [
+        'factories' => [
+            'Zend\Db\Adapter\Adapter' => 'Zend\Db\Adapter\AdapterServiceFactory',
+        ],
+    ],
+];
+EOF
 
-global_configure() {
+#global_configure() {
     # Loop the global config array
-    for i in "${!global_configurationArray[@]}"
-    do
-        search=$i
-        replace=${global_configurationArray[$i]}
-        sudo sed -i "s/${search}/${replace}/g" $PATH_TO_DIAGNOSTIC/config/autoload/global.php
-    done
-}
-global_configure
+#    for i in "${!global_configurationArray[@]}"
+#    do
+#        search=$i
+#        replace=${global_configurationArray[$i]}
+#        sudo sed -i "s/${search}/${replace}/g" $PATH_TO_DIAGNOSTIC/config/autoload/global.php
+#    done
+#}
+#global_configure
 
 cp $PATH_TO_DIAGNOSTIC/config/autoload/local.php.dist $PATH_TO_DIAGNOSTIC/config/autoload/local.php
+cat > $PATH_TO_DIAGNOSTIC/config/autoload/global.php <<EOF
+return [
+    'db' => [
+        'username' => '$DBUSER_DIAGNOSTIC',
+        'password' => '$DBPASSWORD_DIAGNOSTIC',
+    ],
+    'encryption_key' => '*****',
+    'mail' => 'info@cases.lu',
+    'mail_name' => 'Cases',
+    'domain' => 'diagnostic.cases.lu',
+];
+EOF
 
-local_configure() {
+
+#local_configure() {
     # Loop the local config array
-    for i in "${!local_configurationArray[@]}"
-    do
-        search=$i
-        replace=${local_configurationArray[$i]}
-        sudo sed -i "s/${search}/${replace}/g" $PATH_TO_DIAGNOSTIC/config/autoload/local.php
-    done
-}
-local_configure
+#    for i in "${!local_configurationArray[@]}"
+#    do
+#        search=$i
+#        replace=${local_configurationArray[$i]}
+#        sudo sed -i "s/${search}/${replace}/g" $PATH_TO_DIAGNOSTIC/config/autoload/local.php
+#    done
+#}
+#local_configure
 echo -e "\033[32mmysql installation done"
 
 echo -e "\033[93mvirtual host configuration"
