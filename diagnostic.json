@@ -15,7 +15,10 @@
         "vm_name": "{{user `vm_name`}}",
 
         "vboxmanage": [
-            ["modifyvm", "{{.Name}}", "--vram", "32"]
+            ["modifyvm", "{{.Name}}", "--vram", "32"],
+			["modifyvm", "{{.Name}}", "--nic1", "nat"],
+			["modifyvm", "{{.Name}}", "--nic2", "hostonly"],
+			["modifyvm", "{{.Name}}", "--hostonlyadapter2", "VirtualBox Host-Only Ethernet Adapter #2"]
         ],
 
         "disk_size": "{{user `disk_size`}}",
@@ -44,6 +47,7 @@
             "fb=false debconf/frontend=noninteractive ",
             "keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA ",
             "keyboard-configuration/variant=USA console-setup/ask_detect=false ",
+			"netcfg/choose_interface=enp0s3 ",
             "initrd=/install/initrd.gz -- <enter>"
         ]
     }
