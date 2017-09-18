@@ -18,7 +18,7 @@
             ["modifyvm", "{{.Name}}", "--vram", "32"],
 			["modifyvm", "{{.Name}}", "--nic1", "nat"],
 			["modifyvm", "{{.Name}}", "--nic2", "hostonly"],
-			["modifyvm", "{{.Name}}", "--hostonlyadapter2", "VirtualBox Host-Only Ethernet Adapter #2"]
+			["modifyvm", "{{.Name}}", "--hostonlyadapter2", "YourHostOnlyCardName"]
         ],
 
         "disk_size": "{{user `disk_size`}}",
