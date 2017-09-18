@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
 PATH_TO_DIAGNOSTIC='/var/www/diagnostic'
-GITHUB_LINK='https://[accountName]:[Password]@github.com/BenjaminJoly/diagnostic.git'
+GITHUB_LINK='https://github.com/CASES-LU/diagnostic.git'
 
 # Variables
 HOSTNAME='diagnostic'
@@ -41,6 +41,9 @@ if [ $? -ne 0 ]; then
     echo "ERROR: unable to clone the Diagnostic repository"
     exit 1;
 fi
+echo "\033[93mDisable MxCheck\\033[0m"
+sudo sed -i "/'useMxCheck' => true,/c\\\t\t\t'useMxCheck' => false," $PATH_TO_DIAGNOSTIC/module/Diagnostic/src/Diagnostic/InputFilter/LoginFormFilter.php
+echo "\033[32mMxCheck disabled\\033[0m"
 echo "\033[32mdiagnostic sources copied\\033[0m"
 
 echo "\033[93mcomposer installation\\033[0m"
@@ -52,7 +55,7 @@ if [ $? -ne 0 ]; then
     exit 1;
 fi
 composer self-update
-composer install -o
+composer install -o --prefer-dist
 echo "\033[32mcomposer installation done\\033[0m"
 #php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
 #php composer-setup.php
@@ -89,6 +92,7 @@ echo "\033[32mdatabase ready\\033[0m"
 
 cp $PATH_TO_DIAGNOSTIC/config/autoload/global.php.dist $PATH_TO_DIAGNOSTIC/config/autoload/global.php
 cat > $PATH_TO_DIAGNOSTIC/config/autoload/global.php <<EOF
+<?php
 return [
     'db' => [
         'driver'         => 'Pdo',
@@ -117,7 +121,8 @@ EOF
 #global_configure
 
 cp $PATH_TO_DIAGNOSTIC/config/autoload/local.php.dist $PATH_TO_DIAGNOSTIC/config/autoload/local.php
-cat > $PATH_TO_DIAGNOSTIC/config/autoload/global.php <<EOF
+cat > $PATH_TO_DIAGNOSTIC/config/autoload/local.php <<EOF
+<?php
 return [
     'db' => [
         'username' => '$DBUSER_DIAGNOSTIC',
@@ -182,23 +187,25 @@ iface lo inet loopback
 
 # The primary network interface
 auto enp0s8
-iface enp0s8 inet dhcp
+iface enp0s8 inet static
+	address 10.0.0.102
+	netmask 255.0.0.0
+	gateway 10.0.0.1
 EOF
 sudo ifconfig enp0s8 up
-sudo ifconfig enp0s3 down
-ip_address=ip -4 addr show enp0s8 | grep -oP '(?<=inet\s)\d+(\.\d+){3}'
 echo "\033[32mnetworkconfiguration done\\033[0m"
 
 echo "\033[93m###############################################################################\\033[0m"
 echo "\033[93m#                                  FINISHED                                   #\\033[0m"
 echo "\033[93m#            You can now access the application by typing in                  #\\033[0m"
-echo "\033[93m#            \033[33mhttp://$ip_address                                                \033[93m#\\033[0m"
+echo "\033[93m#            \033[33mhttp://10.0.0.102                                                \033[93m#\\033[0m"
 echo "\033[93m#                        in your favorite browser.                            #\\033[0m"
 echo "\033[93m#                   \033[92mLogin : diagnostic@cases.lu                               \033[93m#\\033[0m"
 echo "\033[93m#                   \033[92mPassword : Diagnostic1!                                   \033[93m#\\033[0m"
 echo "\033[93m#                                                                             #\\033[0m"
 echo "\033[93m#           Note following credentials, it wont be given twice                #\\033[0m"
-echo "\033[93m#           \033[92mSSH login: diagnostic:diagnostic                                  #\\033[0m"
+echo "\033[93m#           Under the following format : \033[92m[login]:[password]\033[93m                   #\\033[0m"
+echo "\033[93m#           \033[92mSSH login: diagnostic:diagnostic\033[93m                                  #\\033[0m"
 echo "\033[93m# \033[92mMysql root login: $DBUSER_ADMIN:$DBPASSWORD_ADMIN\\033[0m"
 echo "\033[93m# \033[92mMysql diagnostic login: $DBUSER_DIAGNOSTIC:$DBPASSWORD_DIAGNOSTIC\\033[0m"
 echo "\033[93m#                                                                             #\\033[0m"
