@@ -43,6 +43,8 @@ if [ $? -ne 0 ]; then
 fi
 echo "\033[93mDisable MxCheck\\033[0m"
 sudo sed -i "/'useMxCheck' => true,/c\\\t\t\t'useMxCheck' => false," $PATH_TO_DIAGNOSTIC/module/Diagnostic/src/Diagnostic/InputFilter/LoginFormFilter.php
+sudo sed -i "/'useMxCheck' => true/c\\\t\t\t'useMxCheck' => false" $PATH_TO_DIAGNOSTIC/module/Admin/src/Admin/InputFilter/UserFormFilter.php
+sudo sed -i "/'useMxCheck' => true/c\\\t\t\t'useMxCheck' => false" $PATH_TO_DIAGNOSTIC/module/Admin/src/Admin/InputFilter/EmailNotExistFilter.php
 echo "\033[32mMxCheck disabled\\033[0m"
 echo "\033[32mdiagnostic sources copied\\033[0m"
 
